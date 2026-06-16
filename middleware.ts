@@ -12,7 +12,11 @@ const isPublicRoute = createRouteMatcher([
 
 function isClerkConfigured() {
   const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
-  return key.startsWith("pk_test_") || key.startsWith("pk_live_");
+  return (
+    (key.startsWith("pk_test_") || key.startsWith("pk_live_")) &&
+    key.length >= 40 &&
+    /^[\x20-\x7E]+$/.test(key)
+  );
 }
 
 // Clerk 未設定時はすべてのリクエストをそのまま通す

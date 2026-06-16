@@ -3,9 +3,17 @@
  * Clerk / Supabase のキーが未設定またはプレースホルダーの場合は true
  */
 
+/** ASCII 英数字・記号のみで構成された十分な長さのキーかどうかを確認 */
+function isRealKey(key: string, minLen = 30): boolean {
+  return key.length >= minLen && /^[\x20-\x7E]+$/.test(key);
+}
+
 export function isClerkConfigured(): boolean {
   const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
-  return key.startsWith("pk_test_") || key.startsWith("pk_live_");
+  return (
+    (key.startsWith("pk_test_") || key.startsWith("pk_live_")) &&
+    isRealKey(key, 40)
+  );
 }
 
 export function isSupabaseConfigured(): boolean {
@@ -13,8 +21,9 @@ export function isSupabaseConfigured(): boolean {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
   return (
     url.includes(".supabase.co") &&
+    isRealKey(url, 30) &&
     key.startsWith("eyJ") &&
-    !url.includes("ここに")
+    isRealKey(key, 100)
   );
 }
 

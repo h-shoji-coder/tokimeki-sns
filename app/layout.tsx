@@ -15,7 +15,9 @@ export const metadata: Metadata = {
 
 const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 const isClerkReady =
-  clerkKey.startsWith("pk_test_") || clerkKey.startsWith("pk_live_");
+  (clerkKey.startsWith("pk_test_") || clerkKey.startsWith("pk_live_")) &&
+  clerkKey.length >= 40 &&
+  /^[\x20-\x7E]+$/.test(clerkKey);
 
 function AppContent({ children }: { children: React.ReactNode }) {
   return (
