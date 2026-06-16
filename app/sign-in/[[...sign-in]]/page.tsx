@@ -1,11 +1,18 @@
-import { SignIn } from "@clerk/nextjs";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isDemoMode } from "@/lib/demo-mode";
 
 export default function SignInPage() {
+  if (isDemoMode()) {
+    redirect("/home");
+  }
+
+  // 本番モード: Clerk の SignIn を動的インポートで読み込む
+  const SignIn = require("@clerk/nextjs").SignIn;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-pink-50 flex flex-col items-center justify-center px-4 py-12">
-      {/* ロゴ */}
       <Link href="/" className="flex items-center gap-2 mb-8 group">
         <Heart
           className="text-rose-500 fill-rose-500 group-hover:scale-110 transition-transform"

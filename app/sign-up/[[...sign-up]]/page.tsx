@@ -1,11 +1,17 @@
-import { SignUp } from "@clerk/nextjs";
 import { Heart, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isDemoMode } from "@/lib/demo-mode";
 
 export default function SignUpPage() {
+  if (isDemoMode()) {
+    redirect("/home");
+  }
+
+  const SignUp = require("@clerk/nextjs").SignUp;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-pink-50 flex flex-col items-center justify-center px-4 py-12">
-      {/* ロゴ */}
       <Link href="/" className="flex items-center gap-2 mb-6 group">
         <Heart
           className="text-rose-500 fill-rose-500 group-hover:scale-110 transition-transform"

@@ -13,7 +13,7 @@ export default function LandingPage() {
           <span className="text-xl font-bold gradient-text">ときめき</span>
         </div>
         <Link
-          href="/home"
+          href="/sign-in"
           className="text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors"
         >
           ログイン
