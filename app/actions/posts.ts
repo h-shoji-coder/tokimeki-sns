@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ensureSupabaseUser } from "@/lib/supabase/auth-helpers";
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { isDemoMode } from "@/lib/demo-mode";
 
 const createPostSchema = z.object({
   content: z
@@ -16,24 +16,26 @@ export async function createPost(formData: FormData) {
   const user = await ensureSupabaseUser();
   if (!user) return { error: "ログインが必要です" };
 
-  const raw = {
-    content: formData.get("content") as string,
-  };
-
+  const raw = { content: formData.get("content") as string };
   const parsed = createPostSchema.safeParse(raw);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  // デモモード: DBへの書き込みをスキップして成功を返す
+  if (isDemoMode()) {
+    revalidatePath("/home");
+    return { success: true };
   }
 
+  const { createServiceRoleClient } = await import(
+    "@/lib/supabase/service-role"
+  );
   const { content } = parsed.data;
   const hashtags = Array.from(content.matchAll(/#(\S+)/g)).map((m) => m[1]);
 
   const supabase = createServiceRoleClient();
-  const { error } = await supabase.from("posts").insert({
-    user_id: user.id,
-    content,
-    hashtags,
-  });
+  const { error } = await supabase
+    .from("posts")
+    .insert({ user_id: user.id, content, hashtags });
 
   if (error) {
     console.error("[createPost] error:", error.message);
@@ -48,6 +50,15 @@ export async function togglePostLike(postId: string) {
   const user = await ensureSupabaseUser();
   if (!user) return { error: "ログインが必要です" };
 
+  // デモモード
+  if (isDemoMode()) {
+    revalidatePath("/home");
+    return { liked: true };
+  }
+
+  const { createServiceRoleClient } = await import(
+    "@/lib/supabase/service-role"
+  );
   const supabase = createServiceRoleClient();
 
   const { data: existing } = await supabase
@@ -59,10 +70,6 @@ export async function togglePostLike(postId: string) {
 
   if (existing) {
     await supabase.from("post_likes").delete().eq("id", existing.id);
-    await supabase
-      .from("posts")
-      .update({ like_count: 0 })
-      .eq("id", postId);
     revalidatePath("/home");
     return { liked: false };
   } else {

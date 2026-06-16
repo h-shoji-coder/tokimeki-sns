@@ -9,14 +9,15 @@ import {
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import { ensureSupabaseUser } from "@/lib/supabase/auth-helpers";
+import { isDemoMode } from "@/lib/demo-mode";
 import { diagnosisResults } from "@/lib/mock-data";
 import Avatar from "@/app/components/ui/Avatar";
 import Badge from "@/app/components/ui/Badge";
 
 export default async function MyPage() {
   const me = await ensureSupabaseUser();
+  const demo = isDemoMode();
 
   const avatarUrl =
     me?.avatar_url ??
@@ -60,14 +61,21 @@ export default async function MyPage() {
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-pink-100">
         <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold text-gray-800">マイページ</h1>
-          {/* Clerk UserButton */}
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: "w-8 h-8",
-              },
-            }}
-          />
+          {/* ユーザーボタン */}
+          {!demo ? (
+            (() => {
+              const { UserButton } = require("@clerk/nextjs");
+              return (
+                <UserButton
+                  appearance={{ elements: { avatarBox: "w-8 h-8" } }}
+                />
+              );
+            })()
+          ) : (
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+              デモ
+            </span>
+          )}
         </div>
       </header>
 
@@ -210,17 +218,14 @@ export default async function MyPage() {
             </Link>
           ))}
           {/* ログアウト */}
-          <div className="flex items-center gap-3 px-4 py-4">
-            <LogOut size={18} className="text-gray-400 shrink-0" />
-            <span className="flex-1 text-sm font-medium text-gray-500">
-              ログアウト
-            </span>
-            <UserButton
-              appearance={{
-                elements: { avatarBox: "w-6 h-6", userButtonBox: "gap-0" },
-              }}
-            />
-          </div>
+          {!demo && (
+            <div className="flex items-center gap-3 px-4 py-4">
+              <LogOut size={18} className="text-gray-400 shrink-0" />
+              <span className="flex-1 text-sm font-medium text-gray-500">
+                ログアウト
+              </span>
+            </div>
+          )}
         </div>
       </section>
     </div>

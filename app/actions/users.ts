@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ensureSupabaseUser } from "@/lib/supabase/auth-helpers";
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { isDemoMode } from "@/lib/demo-mode";
 import type { LoveType } from "@/lib/supabase/db-types";
 
 const updateProfileSchema = z.object({
@@ -22,6 +22,7 @@ const updateProfileSchema = z.object({
 export async function updateProfile(formData: FormData) {
   const user = await ensureSupabaseUser();
   if (!user) return { error: "ログインが必要です" };
+  if (isDemoMode()) return { success: true };
 
   const raw = {
     bio: (formData.get("bio") as string) || undefined,
@@ -37,6 +38,9 @@ export async function updateProfile(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
+  const { createServiceRoleClient } = await import(
+    "@/lib/supabase/service-role"
+  );
   const supabase = createServiceRoleClient();
   const { error } = await supabase
     .from("users")
@@ -55,7 +59,14 @@ export async function updateProfile(formData: FormData) {
 export async function saveDiagnosisResult(loveType: LoveType) {
   const user = await ensureSupabaseUser();
   if (!user) return { error: "ログインが必要です" };
+  if (isDemoMode()) {
+    revalidatePath("/mypage");
+    return { success: true };
+  }
 
+  const { createServiceRoleClient } = await import(
+    "@/lib/supabase/service-role"
+  );
   const supabase = createServiceRoleClient();
 
   await supabase.from("diagnosis_results").insert({
@@ -76,7 +87,14 @@ export async function saveDiagnosisResult(loveType: LoveType) {
 export async function sendUserLike(toUserId: string) {
   const user = await ensureSupabaseUser();
   if (!user) return { error: "ログインが必要です", matched: false };
+  if (isDemoMode()) {
+    revalidatePath("/discover");
+    return { success: true, matched: Math.random() > 0.7 };
+  }
 
+  const { createServiceRoleClient } = await import(
+    "@/lib/supabase/service-role"
+  );
   const supabase = createServiceRoleClient();
 
   const { error } = await supabase.from("user_likes").insert({

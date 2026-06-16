@@ -1,5 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { isDemoMode } from "@/lib/demo-mode";
 import { ensureSupabaseUser } from "@/lib/supabase/auth-helpers";
 import AppLayout from "@/app/components/layout/AppLayout";
 
@@ -8,11 +7,16 @@ export default async function AppGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const demo = isDemoMode();
 
-  // Clerk ユーザーを Supabase に自動同期
-  await ensureSupabaseUser();
+  if (!demo) {
+    // 本番モード: Clerk 認証チェック + Supabase 同期
+    const { auth } = await import("@clerk/nextjs/server");
+    const { redirect } = await import("next/navigation");
+    const { userId } = await auth();
+    if (!userId) redirect("/sign-in");
+    await ensureSupabaseUser();
+  }
 
   return <AppLayout>{children}</AppLayout>;
 }

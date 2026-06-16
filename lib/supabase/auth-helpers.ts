@@ -1,12 +1,15 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { createServiceRoleClient } from "./service-role";
+import { DEMO_USER, isDemoMode } from "@/lib/demo-mode";
 
 export async function getSupabaseUserByClerkId() {
+  if (isDemoMode()) return DEMO_USER;
+
+  const { auth } = await import("@clerk/nextjs/server");
   const { userId } = await auth();
   if (!userId) return null;
 
+  const { createServiceRoleClient } = await import("./service-role");
   const supabase = createServiceRoleClient();
   const { data } = await supabase
     .from("users")
@@ -19,16 +22,21 @@ export async function getSupabaseUserByClerkId() {
 
 /**
  * Clerk ユーザーを Supabase users テーブルに自動同期
- * Protected レイアウト・Server Actions の先頭で呼び出す
+ * デモモード時はダミーユーザーを返す
  */
 export async function ensureSupabaseUser() {
+  if (isDemoMode()) return DEMO_USER;
+
+  const { auth, currentUser } = await import("@clerk/nextjs/server");
   const { userId } = await auth();
   if (!userId) return null;
 
   const clerkUser = await currentUser();
   if (!clerkUser) return null;
 
+  const { createServiceRoleClient } = await import("./service-role");
   const supabase = createServiceRoleClient();
+
   const { data, error } = await supabase
     .from("users")
     .upsert(
