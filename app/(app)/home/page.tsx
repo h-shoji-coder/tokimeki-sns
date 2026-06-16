@@ -15,7 +15,7 @@ export default async function HomePage() {
   let posts = mockPosts;
   let users = mockUsers;
 
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("supabase.co")) {
+  if (supabase && process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("supabase.co")) {
     const { data: dbPosts } = await supabase
       .from("posts")
       .select(
